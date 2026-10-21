@@ -87,4 +87,3 @@ This project is **open source** under the MIT License. See the `LICENSE` file fo
 
 ---
 
-*Generated with Codebuff 🤖*
