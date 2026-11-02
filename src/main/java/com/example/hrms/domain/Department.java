@@ -1,8 +1,6 @@
 package com.example.hrms.domain;
 
-import javax.persistence.*;
-import java.util.UUID;
-import java.util.List;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "departments")
@@ -12,18 +10,32 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true, length = 60)
     private String name;
 
-    @Column(name = "cost_center", length = 20)
-    private String costCenter;
+    @Column(length = 200)
+    private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_department_id")
-    private Department parent;
+    @Column(name = "tenant_id", nullable = false)
+    private UUID tenantId;
 
-    @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
-    private List<Employee> employees;
+    public Department() {}
 
-    // Getters, setters, constructors omitted for brevity
+    public Department(String name, String description, UUID tenantId) {
+        this.name = name;
+        this.description = description;
+        this.tenantId = tenantId;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public UUID getTenantId() { return tenantId; }
+    public void setTenantId(UUID tenantId) { this.tenantId = tenantId; }
 }
