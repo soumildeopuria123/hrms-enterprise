@@ -7,52 +7,63 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.*;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-@RestController
+@org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/leaves")
 @RequiredArgsConstructor
 public class LeaveController {
 
     private final LeaveService leaveService;
 
-    /** POST /api/leaves – Submit a new leave request */
+    /**
+     * POST /api/leaves – Submit a new leave request.
+     */
     @PostMapping
-    public ResponseEntity<LeaveRequest> submit(@RequestBody LeaveRequestDTO dto,
-                                               @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<LeaveRequest> submit(
+            @RequestBody LeaveRequestDTO dto,
+            @AuthenticationPrincipal UserDetails user) {
         Long employeeId = extractEmployeeIdFromUser(user);
         LeaveRequest created = leaveService.submitLeave(dto, employeeId);
         return ResponseEntity.status(201).body(created);
     }
 
-    /** GET /api/leaves – Fetch leave requests based on user role/employee ID */
+    /**
+     * GET /api/leaves – Fetch leave requests based on user role/employee ID.
+     */
     @GetMapping
-    public ResponseEntity<List<LeaveRequest>> getAll(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<List<LeaveRequest>> getAll(
+            @AuthenticationPrincipal UserDetails user) {
         Long userId = extractUserId(user);
         String role = determineRole(user);
         List<LeaveRequest> requests = leaveService.getLeaveRequestsByUser(userId, role);
         return ResponseEntity.ok(requests);
     }
 
-    /** PATCH /api/leaves/{id}/status – Approve/Reject step endpoint */
+    /**
+     * PATCH /api/leaves/{id}/status – Approve/Reject step endpoint.
+     */
     @PatchMapping("/{id}/status")
-    public ResponseEntity<LeaveRequest> updateStatus(@PathVariable Long id,
-                                                    @RequestParam String decision,
-                                                    @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<LeaveRequest> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String decision,
+            @AuthenticationPrincipal UserDetails user) {
         LeaveRequest updated = leaveService.approveReject(id, decision, extractUserId(user));
         return ResponseEntity.ok(updated);
     }
 
-    /** Helper – map principal → employee ID (adapt to your security model) */
+    /**
+     * Helper – map principal to employee ID (adapt to your security model).
+     */
     private Long extractEmployeeIdFromUser(UserDetails user) {
         // Example: return Long.parseLong(user.getUsername());
         return 1L; // placeholder
     }
 
     private Long extractUserId(UserDetails user) {
+        // Adapt to your UserDetails implementation (e.g., Long.parseLong(user.getUsername()))
         return Long.parseLong(user.getUsername());
     }
 

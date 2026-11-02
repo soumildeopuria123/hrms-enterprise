@@ -8,20 +8,22 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-@RestController
+@org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/expenses")
 @RequiredArgsConstructor
 public class ExpenseController {
 
     private final ExpenseService expenseService;
 
-    /** POST /api/expenses – Submit a new expense claim */
+    /**
+     * POST /api/expenses – Submit a new expense claim.
+     */
     @PostMapping
     public ResponseEntity<ExpenseClaim> submit(
             @RequestParam BigDecimal amount,
@@ -38,7 +40,9 @@ public class ExpenseController {
         return ResponseEntity.status(201).body(created);
     }
 
-    /** GET /api/expenses – Fetch expense claims filtered by employee, status, or role */
+    /**
+     * GET /api/expenses – Fetch expense claims filtered by employee, status, or role.
+     */
     @GetMapping
     public ResponseEntity<List<ExpenseClaimDTO>> list(
             @RequestParam(required = false) Long employeeId,
@@ -47,7 +51,6 @@ public class ExpenseController {
             @AuthenticationPrincipal UserDetails user) {
 
         List<ExpenseClaim> claims;
-
         if ("EMPLOYEE".equalsIgnoreCase(role) && employeeId != null) {
             claims = expenseService.getClaimsByEmployee(employeeId);
         } else if (status != null) {
@@ -56,15 +59,15 @@ public class ExpenseController {
             // Admin / default: return all claims (apply pagination in production)
             claims = expenseRepository.findAll(); // assume repo exposure
         }
-
         List<ExpenseClaimDTO> dtos = claims.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(dtos);
     }
 
-    /** PATCH /api/expenses/{id}/status – Manager / Finance approval/rejection */
+    /**
+     * PATCH /api/expenses/{id}/status – Manager / Finance approval/rejection.
+     */
     @PatchMapping("/{id}/status")
     public ResponseEntity<ExpenseClaim> updateStatus(
             @PathVariable Long id,
@@ -83,7 +86,18 @@ public class ExpenseController {
         return ResponseEntity.ok(updated);
     }
 
-    /** DTO for API responses */
+    // ---- helpers ----
+
+    private Long extractEmployeeIdFromUser(UserDetails user) {
+        // Example: return Long.parseLong(user.getUsername());
+        return 1L; // placeholder
+    }
+
+    private String determineRole(UserDetails user) {
+        // Inspect user.getAuthorities() and return "EMPLOYEE", "MANAGER", "FINANCE", etc.
+        return "EMPLOYEE"; // placeholder
+    }
+
     private ExpenseClaimDTO toDto(ExpenseClaim claim) {
         return ExpenseClaimDTO.builder()
                 .id(claim.getId())
@@ -92,23 +106,11 @@ public class ExpenseController {
                 .amount(claim.getAmount())
                 .currency(claim.getCurrency())
                 .expenseDate(claim.getExpenseDate())
-                .category(claim.getCategory())
+                .category(claim.getCategory().name())
                 .businessPurpose(claim.getBusinessPurpose())
-                .status(claim.getStatus())
+                .status(claim.getStatus().name())
                 .submittedAt(claim.getSubmittedAt())
                 .build();
-    }
-
-    /** Helper – map principal → employee ID (adapt to your security model) */
-    private Long extractEmployeeIdFromUser(UserDetails user) {
-        // Example: return Long.parseLong(user.getUsername());
-        return 1L; // placeholder
-    }
-
-    /** Helper – determine role from principal authorities */
-    private String determineRole(UserDetails user) {
-        // Inspect user.getAuthorities() and return "EMPLOYEE", "MANAGER", "FINANCE", etc.
-        return "EMPLOYEE"; // placeholder
     }
 
     @lombok.Data @lombok.Builder @lombok.AllArgsConstructor @lombok.NoArgsConstructor

@@ -7,20 +7,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@RestController
+@org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/payroll")
 @RequiredArgsConstructor
 public class PayrollController {
 
     private final PayrollService payrollService;
 
-    /** POST /api/payroll/runs – Initiate a new payroll run */
+    /**
+     * POST /api/payroll/runs – Initiate a new payroll run.
+     */
     @PostMapping("/runs")
     public ResponseEntity<PayrollRun> initiateRun(
             @RequestBody PayrollRunRequest request,
@@ -35,7 +37,9 @@ public class PayrollController {
         return ResponseEntity.status(201).body(run);
     }
 
-    /** GET /api/payroll/runs – List all payroll runs (optionally filtered by tenant) */
+    /**
+     * GET /api/payroll/runs – List all payroll runs (optionally filtered by tenant).
+     */
     @GetMapping("/runs")
     public ResponseEntity<List<PayrollRunSummary>> listRuns(
             @RequestParam(required = false) UUID tenantId,
@@ -69,27 +73,29 @@ public class PayrollController {
                 .toList());
     }
 
-    /** GET /api/payroll/runs/{id}/items – Fetch line items / payslip data */
+    /**
+     * GET /api/payroll/runs/{id}/items – Fetch line items / payslip data.
+     */
     @GetMapping("/runs/{payrollRunId}/items")
     public ResponseEntity<List<PayrollService.PayrollItemDTO>> getItems(
             @PathVariable UUID payrollRunId) {
-
         List<PayrollService.PayrollItemDTO> items = payrollService.getItems(payrollRunId);
         return ResponseEntity.ok(items);
     }
 
-    /** PATCH /api/payroll/runs/{id}/finalize – Lock and finalize payroll */
+    /**
+     * PATCH /api/payroll/runs/{id}/finalize – Lock and finalize payroll.
+     */
     @PatchMapping("/runs/{payrollRunId}/finalize")
     public ResponseEntity<PayrollRun> finalize(
             @PathVariable UUID payrollRunId,
             @AuthenticationPrincipal UserDetails user) {
-
         Long finalizerId = extractUserId(user);
         PayrollRun run = payrollService.finalizeRun(payrollRunId, finalizerId);
         return ResponseEntity.ok(run);
     }
 
-    /** ---- helpers ---- */
+    // ---- helpers ----
 
     private Long extractUserId(UserDetails user) {
         // Adapt to your UserDetails implementation (e.g., Long.parseLong(user.getUsername()))
