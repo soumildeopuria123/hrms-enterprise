@@ -1,9 +1,12 @@
 package com.example.hrms.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
-import java.time.LocalDate;
 
+/**
+ * Central employee aggregate. Tenanted so a single installation can host
+ * multiple organisations with isolated data per tenant.
+ */
 @Entity
 @Table(name = "employees")
 public class Employee {
@@ -12,7 +15,7 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "employee_number", unique = true, length = 20)
+    @Column(name = "employee_number", unique = true, nullable = false, length = 20)
     private String employeeNumber;
 
     @Column(nullable = false, length = 50)
@@ -21,8 +24,11 @@ public class Employee {
     @Column(nullable = false, length = 50)
     private String lastName;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "work_email", unique = true, nullable = false, length = 100)
     private String workEmail;
+
+    @Column(name = "personal_email", length = 100)
+    private String personalEmail;
 
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
@@ -42,8 +48,62 @@ public class Employee {
     private LocalDate terminationDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private EmploymentStatus employmentStatus;
+    @Column(length = 20, nullable = false)
+    private EmploymentStatus employmentStatus = EmploymentStatus.ACTIVE;
 
-    // Getters, setters, constructors omitted for brevity
+    public Employee() {}
+
+    public Employee(String employeeNumber, String firstName, String lastName,
+                    String workEmail, UUID tenantId, Department department) {
+        this.employeeNumber = employeeNumber;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.workEmail = workEmail;
+        this.tenantId = tenantId;
+        this.department = department;
+        this.hireDate = LocalDate.now();
+        this.employmentStatus = EmploymentStatus.ACTIVE;
+    }
+
+    public String fullName() {
+        return firstName + " " + lastName;
+    }
+
+    // --- accessors ---
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getEmployeeNumber() { return employeeNumber; }
+    public void setEmployeeNumber(String employeeNumber) { this.employeeNumber = employeeNumber; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getWorkEmail() { return workEmail; }
+    public void setWorkEmail(String workEmail) { this.workEmail = workEmail; }
+
+    public String getPersonalEmail() { return personalEmail; }
+    public void setPersonalEmail(String personalEmail) { this.personalEmail = personalEmail; }
+
+    public UUID getTenantId() { return tenantId; }
+    public void setTenantId(UUID tenantId) { this.tenantId = tenantId; }
+
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
+
+    public Employee getManager() { return manager; }
+    public void setManager(Employee manager) { this.manager = manager; }
+
+    public LocalDate getHireDate() { return hireDate; }
+    public void setHireDate(LocalDate hireDate) { this.hireDate = hireDate; }
+
+    public LocalDate getTerminationDate() { return terminationDate; }
+    public void setTerminationDate(LocalDate terminationDate) { this.terminationDate = terminationDate; }
+
+    public EmploymentStatus getEmploymentStatus() { return employmentStatus; }
+    public void setEmploymentStatus(EmploymentStatus employmentStatus) { this.employmentStatus = employmentStatus; }
 }
