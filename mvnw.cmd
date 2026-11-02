@@ -1,8 +1,15 @@
-#!"${OS}" == "Windows_NT" "bat" : "mvnw.cmd"
-
 @echo off
+rem
+rem Maven2 Start Script for Windows
+rem
 
-REM Maven wrapper script placeholder.
-REM On Unix: ./mvnw
-REM On Windows: mvnw.cmd
-REM In production, replace this placeholder with the real Maven wrapper scripts.
+set "PRG=%~dp0%%~nx0"
+
+if exist "%PRG_DIR%\.mvn\wrapper\maven-wrapper.jar" (
+    exec "%JAVA_HOME%\bin\java.exe" %*
+    -classpath "%PRG_DIR%\.mvn\wrapper\maven-wrapper.jar"
+    org.apache.maven.wrapper.MavenWrapperMain %*
+) else (
+    echo Cannot find maven-wrapper.jar >&2
+    exit /b 1
+)
