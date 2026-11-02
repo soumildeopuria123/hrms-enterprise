@@ -4,6 +4,8 @@ public enum Status {
     DRAFT,
     SUBMITTED,
     PENDING_MANAGER,
+    PENDING_FINANCE,
     APPROVED,
-    REJECTED
+    REJECTED,
+    CANCELLED
 }
