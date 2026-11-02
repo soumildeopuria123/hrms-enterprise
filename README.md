@@ -1,10 +1,9 @@
-# Enterprise HR Management System (HRMS)
+# HRMS Enterprise
 
-A full‑stack Human Resource Management System built with **Spring Boot** (Java) and **React + TypeScript + Tailwind Neo‑Brutalism**.  
+Enterprise Human Resource Management System built with **Spring Boot 3** (Java 17)
+and **PostgreSQL**.
 
-It covers four core modules for enterprise service companies:
-
-## Modules
+Covers four core modules for service companies:
 
 | Module | Description |
 |--------|-------------|
@@ -15,30 +14,48 @@ It covers four core modules for enterprise service companies:
 
 ## Tech Stack
 
-- **Backend**: Java 17, Spring Boot 3, Spring Data JPA, PostgreSQL
-- **Frontend**: React, TypeScript, Tailwind CSS (Neo‑Brutalist styling: hard shadows `4px 4px 0px #000`, thick borders `2px solid #000`)
-- **Build/CI**: Maven (backend), Create‑React‑App / Vite (frontend) – CI not yet configured
-- **Version Control**: Git – repo hosted at <https://github.com/soumildeopuria123/hrms-enterprise>
+- **Backend**: Java 17, Spring Boot 3, Spring Data JPA, Spring Security, Lombok
+- **Database**: PostgreSQL
+- **Build / CI**: Maven, GitHub Actions (`.github/workflows/ci.yml`)
+- **Package**: `com.example.hrms`
 
 ## Repository Layout
 
 ```
 hrms-enterprise/
 │
-├─ src/
-│  ├─ main/
-│  │  ├─ java/com/example/hrms/domain/        # JPA entities
-│  │  ├─ java/com/example/hrms/repository/    # Spring Data JPA repos
-│  │  ├─ java/com/example/hrms/service/       # Business logic
-│  │  ├─ java/com/example/hrms/web/           # REST controllers
-│  │  └─ resources/static/                     # React pages & assets
-│  │     ├─ leave/LeaveManagementPage.tsx
-│  │     ├─ attendance/AttendancePage.tsx
-│  │     ├─ expenses/ExpenseClaimsPage.tsx
-│  │     └─ payroll/PayrollManagementPage.tsx
-│  └─ ...
-│
-├─ pom.xml               # Maven backend project (simplified)
+├─ src/main/java/com/example/hrms/
+│  ├─ HrmsApplication.java          # Spring Boot entrypoint + config
+│  ├─ domain/                       # JPA entities + enums
+│  │  ├─ Employee.java
+│  │  ├─ Department.java
+│  │  ├─ LeaveRequest.java
+│  │  ├─ Attendance.java
+│  │  ├─ ExpenseClaim.java
+│  │  ├─ PayrollRun.java
+│  │  └─ PayrollItem.java
+│  ├─ repository/                   # Spring Data JPA repositories
+│  │  ├─ EmployeeRepository.java
+│  │  ├─ DepartmentRepository.java
+│  │  ├─ LeaveRequestRepository.java
+│  │  ├─ AttendanceRepository.java
+│  │  ├─ ExpenseRepository.java
+│  │  └─ PayrollRepository.java
+│  ├─ service/                      # use-case services
+│  │  ├─ LeaveService.java
+│  │  ├─ AttendanceService.java
+│  │  ├─ ExpenseService.java
+│  │  └─ PayrollService.java
+│  └─ web/                         # REST controllers + global handler
+│     ├─ LeaveController.java
+│     ├─ AttendanceController.java
+│     ├─ ExpenseController.java
+│     ├─ PayrollController.java
+│     └─ GlobalExceptionHandler.java
+├─ src/main/resources/
+│  ├─ application.properties
+│  └─ README.md
+├─ pom.xml
 ├─ .gitignore
 └─ README.md
 ```
@@ -46,44 +63,65 @@ hrms-enterprise/
 ## Getting Started (local)
 
 ```bash
-# 1️⃣ Clone the repo
-git clone https://github.com/soumildeopuria123/hrms-enterprise.git
-cd hrms-enterprise
+# 1. Start a PostgreSQL database
+export DATASOURCE_URL=jdbc:postgresql://localhost:5432/hrms
+export DATASOURCE_USERNAME=postgres
+export DATASOURCE_PASSWORD=secret
 
-# 2️⃣ Backend (Maven)
-cd src/main/java   # Maven project is at the root
-mvn spring-boot:run   # defaults to http://localhost:8080
-
-# 3️⃣ Frontend (npm)
-cd src/main/resources/static
-npm install
-npm run dev   # Vite dev server, usually http://localhost:5173
+# 2. Run
+mvn spring-boot:run
 ```
 
-> **Note** – The backend expects a PostgreSQL database; configure `application.properties` with your `spring.datasource.url`, `username`, `password`.  
-> The frontend assumes a `useAuth` hook that reads a JWT from `localStorage`; set up your OAuth / SSO flow as described in the architecture docs.
+The app starts on http://localhost:8080/api.
 
-## API Highlights
+## API
+
+### Leaves
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/leaves` | POST | Submit a new leave request |
 | `/api/leaves` | GET | Fetch leaves filtered by user role/employee ID |
 | `/api/leaves/{id}/status` | PATCH | Manager/HR approve or reject |
+
+### Attendance
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/api/attendance/clock-in` | POST | Record a clock‑in punch |
 | `/api/attendance/clock-out` | POST | Record a clock‑out punch and calculate hours |
 | `/api/attendance` | GET | Attendance logs (filtered by employee/role) |
+
+### Expenses
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/api/expenses` | POST | Submit an expense claim |
 | `/api/expenses` | GET | List expenses filtered by employee, status, or role |
 | `/api/expenses/{id}/status` | PATCH | Manager or Finance approve/reject |
+
+### Payroll
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
 | `/api/payroll/runs` | POST | Initiate a new payroll run |
 | `/api/payroll/runs` | GET | List payroll runs |
 | `/api/payroll/runs/{id}/items` | GET | Line‑items / payslip data for a run |
 | `/api/payroll/runs/{id}/finalize` | PATCH | Lock and finalize the payroll |
 
+## Development notes
+
+- Controllers currently use placeholder auth helpers (`extractEmployeeIdFromUser`,
+  `determineRole`). Wire these to your Spring Security `UserDetails` / JWT / SSO
+  setup before production use.
+- Services use placeholder tenant/employee lookups for the demo path; replace with
+  real repository calls once the security context is wired.
+- Receipt storage is modelled in `ExpenseClaim` (filename/content-type fields);
+  plug in your file storage (S3, local disk, etc.) in the upload path.
+- Payroll aggregation is intentionally a stub: extend `PayrollService.initiateRun`
+  to iterate employees, compute gross/hours, deductions and net pay, and persist
+  `PayrollItem` rows.
+
 ## License
 
-This project is **open source** under the MIT License. See the `LICENSE` file for details.
-
----
-
+MIT — see `LICENSE`.
